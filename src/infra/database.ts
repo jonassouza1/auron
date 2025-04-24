@@ -1,5 +1,5 @@
 import { Client, QueryConfig, QueryResult } from "pg";
-import { ServiceError } from "@/infra/erros";
+import { ServiceError } from "@/infra/errors";
 async function query(queryObject: QueryConfig): Promise<QueryResult> {
   let client;
   try {
