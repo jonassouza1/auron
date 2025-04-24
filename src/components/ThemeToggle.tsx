@@ -12,7 +12,7 @@ export default function ThemeToggle() {
         | "dark"
         | null;
       const systemPrefersDark = window.matchMedia(
-        "(prefers-color-scheme: dark)"
+        "(prefers-color-scheme: dark)",
       ).matches;
 
       const activeTheme = storedTheme || (systemPrefersDark ? "dark" : "light");
