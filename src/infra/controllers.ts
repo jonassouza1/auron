@@ -20,21 +20,23 @@ async function onNoMatchHandler(
 }
 
 async function onErrorHandler(
-  error: CustomError,
-  request: NextApiRequest,
-  response: NextApiResponse,
+  err: unknown,
+  req: NextApiRequest,
+  res: NextApiResponse,
 ) {
+  const error = err as CustomError;
+
   if (error instanceof ValidationError || error instanceof NotFoundError) {
-    return response.status(error.statusCode).json(error);
+    return res.status(error.statusCode).json(error);
   }
 
   const publicErrorObject = new InternalServerError({
-    statusCode: error.statusCode,
+    statusCode: error.statusCode || 500,
     cause: error,
   });
 
   console.error(publicErrorObject);
-  response.status(publicErrorObject.statusCode).json(publicErrorObject);
+  res.status(publicErrorObject.statusCode).json(publicErrorObject);
 }
 
 const controller = {
