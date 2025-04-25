@@ -1,10 +1,9 @@
 import { exec } from "child_process";
-import type { ExecException } from "child_process";
 
-function checkPostgres(): void {
+function checkPostgres() {
   exec("docker exec postgres-dev pg_isready --host localhost", handleReturn);
 
-  function handleReturn(error: ExecException | null, stdout: string): void {
+  function handleReturn(error, stdout) {
     if (stdout.search("accepting connections") === -1) {
       process.stdout.write(".");
       setTimeout(checkPostgres, 1000); // adiciona um pequeno delay

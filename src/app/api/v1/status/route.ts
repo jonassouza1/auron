@@ -1,40 +1,60 @@
-import { createRouter } from "next-connect";
 import database from "@/infra/database";
-import controller from "@/infra/controllers";
+import {
+  InternalServerError,
+  ValidationError,
+  NotFoundError,
+} from "@/infra/errors";
 
-const router = createRouter<NextApiRequest, NextApiResponse>();
-router.get(getHandler);
+export async function GET() {
+  try {
+    const updatedAt = new Date().toISOString();
 
-export default router.handler(controller.errorHandlers);
-import type { NextApiRequest, NextApiResponse } from "next";
+    const databaseVersionResult = await database.query({
+      text: "SHOW server_version;",
+    });
 
-async function getHandler(request: NextApiRequest, response: NextApiResponse) {
-  const updatedAt = new Date().toISOString();
-  const databaseVersionResult = await database.query({
-    text: "SHOW server_version;",
-  });
-  const databaseMaxConnectionsResult = await database.query({
-    text: "SHOW max_connections;",
-  });
-  const databaseName = process.env.POSTGRES_DB;
-  const databaseOpenedConnectionsResult = await database.query({
-    text: "SELECT count(*)::int FROM pg_stat_activity WHERE datname = $1;",
-    values: [databaseName],
-  });
-  const databaseOpenedConnectionsValue =
-    databaseOpenedConnectionsResult.rows[0].count;
-  const databaseMaxConnectionsValue =
-    databaseMaxConnectionsResult.rows[0].max_connections;
-  const databaseVersionValue = databaseVersionResult.rows[0].server_version;
+    const databaseMaxConnectionsResult = await database.query({
+      text: "SHOW max_connections;",
+    });
 
-  response.status(200).json({
-    updated_at: updatedAt,
-    dependencies: {
-      database: {
-        version: databaseVersionValue,
-        max_connections: parseInt(databaseMaxConnectionsValue),
-        opened_connections: databaseOpenedConnectionsValue,
+    const databaseName = process.env.POSTGRES_DB;
+
+    const databaseOpenedConnectionsResult = await database.query({
+      text: "SELECT count(*)::int FROM pg_stat_activity WHERE datname = $1;",
+      values: [databaseName],
+    });
+
+    const databaseOpenedConnectionsValue =
+      databaseOpenedConnectionsResult.rows[0].count;
+    const databaseMaxConnectionsValue =
+      databaseMaxConnectionsResult.rows[0].max_connections;
+    const databaseVersionValue = databaseVersionResult.rows[0].server_version;
+
+    return Response.json({
+      updated_at: updatedAt,
+      dependencies: {
+        database: {
+          version: databaseVersionValue,
+          max_connections: parseInt(databaseMaxConnectionsValue),
+          opened_connections: databaseOpenedConnectionsValue,
+        },
       },
-    },
-  });
+    });
+  } catch (err) {
+    const maybeError = err as { statusCode?: number };
+    const error =
+      err instanceof ValidationError || err instanceof NotFoundError
+        ? err
+        : new InternalServerError({
+            statusCode: maybeError.statusCode ?? 500,
+            cause: err,
+          });
+
+    console.error(error);
+
+    return new Response(JSON.stringify(error), {
+      status: error.statusCode || 500,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
 }

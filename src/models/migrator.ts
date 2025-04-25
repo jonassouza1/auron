@@ -5,7 +5,7 @@ import database from "@/infra/database";
 
 const defaultMigrationOptions: Omit<RunnerOption, "dbClient"> = {
   dryRun: true,
-  dir: resolve("infra", "migrations"),
+  dir: resolve("src/infra", "migrations"),
   direction: "up",
   log: () => {},
   migrationsTable: "pgmigrations",

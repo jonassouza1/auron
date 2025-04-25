@@ -1,23 +1,53 @@
 import migrator from "@/models/migrator";
-import { createRouter } from "next-connect";
-import controller from "@/infra/controllers";
-import type { NextApiRequest, NextApiResponse } from "next";
+import { NextResponse } from "next/server";
+import {
+  InternalServerError,
+  NotFoundError,
+  ValidationError,
+} from "@/infra/errors";
 
-const router = createRouter<NextApiRequest, NextApiResponse>();
-router.get(getHandler);
-router.post(postHandler);
-
-export default router.handler(controller.errorHandlers);
-
-async function getHandler(request: NextApiRequest, response: NextApiResponse) {
-  const pendingMigrations = await migrator.listPendingMigrations();
-  return response.status(200).json(pendingMigrations);
+export async function GET() {
+  try {
+    const pendingMigrations = await migrator.listPendingMigrations();
+    return NextResponse.json(pendingMigrations, { status: 200 });
+  } catch (err) {
+    return handleError(err);
+  }
 }
 
-async function postHandler(request: NextApiRequest, response: NextApiResponse) {
-  const migratedMigrations = await migrator.runPendingMigrations();
-  if (migratedMigrations.length > 0) {
-    return response.status(201).json(migratedMigrations);
+export async function POST() {
+  try {
+    const migratedMigrations = await migrator.runPendingMigrations();
+    const status = migratedMigrations.length > 0 ? 201 : 200;
+    return NextResponse.json(migratedMigrations, { status });
+  } catch (err) {
+    return handleError(err);
   }
-  return response.status(200).json(migratedMigrations);
+}
+
+// middleware de erro inspirado no seu antigo controller
+function handleError(err: unknown) {
+  const error = err as { statusCode?: number; message?: string };
+
+  if (err instanceof ValidationError || err instanceof NotFoundError) {
+    return NextResponse.json(
+      { name: err.name, message: err.message },
+      { status: err.statusCode },
+    );
+  }
+
+  const publicError = new InternalServerError({
+    statusCode: error?.statusCode || 500,
+    cause: err,
+  });
+
+  console.error(publicError);
+
+  return NextResponse.json(
+    {
+      name: publicError.name,
+      message: publicError.message,
+    },
+    { status: publicError.statusCode },
+  );
 }
