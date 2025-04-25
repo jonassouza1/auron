@@ -3,6 +3,7 @@ import {
   InternalServerError,
   ValidationError,
   NotFoundError,
+  MethodNotAllowedError,
 } from "@/infra/errors";
 
 export async function GET() {
@@ -58,3 +59,16 @@ export async function GET() {
     });
   }
 }
+
+// Impede os outros métodos
+export function POST() {
+  const error = new MethodNotAllowedError();
+  return new Response(JSON.stringify(error), {
+    status: error.statusCode,
+    headers: { "Content-Type": "application/json" },
+  });
+}
+
+export const PUT = POST;
+export const DELETE = POST;
+export const PATCH = POST;
