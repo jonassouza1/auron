@@ -9,7 +9,7 @@ type Product = {
   quantity: number;
   price: number;
   discount_price?: number;
-  size: string; // Adiciona o 'size' como opcional
+  size_name: string;
 };
 
 export default function ProductCard({ product }: { product: Product }) {
@@ -25,6 +25,8 @@ export default function ProductCard({ product }: { product: Product }) {
           src={product.image_url}
           alt={product.name}
           fill
+          priority={product.image_url === "/calca_legging.jpg"}
+          sizes="(max-width: 768px) 100vw, 400px"
           className="rounded-xl object-cover"
         />
       </div>
@@ -36,11 +38,11 @@ export default function ProductCard({ product }: { product: Product }) {
       </p>
 
       {/* Adiciona a exibição do tamanho (se existir) */}
-      {product.size && (
+      {
         <div className="text-sm text-gray-700 mt-2">
-          <span className="font-medium">Tamanho:</span> {product.size}
+          <span className="font-medium">Tamanho:</span> {product.size_name}
         </div>
-      )}
+      }
 
       <div className="flex items-center gap-2 mb-1">
         {hasDiscount ? (
@@ -53,7 +55,7 @@ export default function ProductCard({ product }: { product: Product }) {
             </span>
           </>
         ) : (
-          <span className="text-gray-800 font-semibold">
+          <span className="text-green-600 font-bold">
             R$ {product.price.toFixed(2)}
           </span>
         )}
@@ -67,7 +69,7 @@ export default function ProductCard({ product }: { product: Product }) {
 
       <button
         onClick={() => addToCart(product)}
-        className="w-full bg-gray-800 text-white py-2 rounded-xl hover:bg-gray-700 disabled:bg-gray-400"
+        className="w-full bg-gray-800 text-white py-2 rounded-xl hover:bg-gray-700 disabled:bg-gray-400 hover:cursor-pointer"
         disabled={product.quantity === 0 || isInCart}
       >
         {isInCart ? "Já está no carrinho" : "Adicionar ao carrinho"}
