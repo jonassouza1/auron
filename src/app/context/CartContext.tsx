@@ -16,7 +16,7 @@ type Product = {
   quantity: number;
   price: number;
   discount_price?: number;
-  size: string;
+  size_name: string;
 };
 
 type CartContextType = {

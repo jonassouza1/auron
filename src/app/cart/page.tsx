@@ -11,7 +11,6 @@ export default function CartPage() {
   const [quantities, setQuantities] = useState<{ [id: number]: number }>({});
 
   useEffect(() => {
-    // Inicializa quantidades com 1 se ainda não tiver valor
     const initial = Object.fromEntries(
       cartItems.map((item) => [item.id, quantities[item.id] || 1]),
     );
@@ -47,51 +46,59 @@ export default function CartPage() {
             return (
               <div
                 key={product.id}
-                className="bg-white p-4 rounded-2xl shadow flex flex-col sm:flex-row gap-4 sm:items-center"
+                className="bg-white p-4 rounded-2xl shadow flex flex-col sm:flex-row gap-4 sm:items-center relative"
               >
-                <Image
-                  src={product.image_url}
-                  alt={product.name}
-                  width={100}
-                  height={100}
-                  className="rounded-xl object-cover"
-                />
-                <div className="flex-1">
-                  <h2 className="text-lg font-semibold text-gray-800">
-                    {product.name}
-                  </h2>
-                  <p className="text-sm text-gray-500">{product.description}</p>
+                {/* Imagem do produto */}
+                <div className="w-full sm:w-auto flex justify-center sm:justify-start">
+                  <Image
+                    src={product.image_url}
+                    alt={product.name}
+                    width={100}
+                    height={100}
+                    priority
+                    className="rounded-xl object-cover w-[100px] h-[100px]"
+                  />
+                </div>
 
-                  {/* Tamanho (estático) */}
-                  <div className="mt-2 text-sm text-gray-700">
-                    <span className="font-medium">Tamanho:</span>{" "}
-                    <span>{product.size}</span>
-                  </div>
+                {/* Informações do produto */}
+                <div className="flex-1 flex flex-col justify-between">
+                  <div>
+                    <h2 className="text-lg font-semibold text-gray-800">
+                      {product.name}
+                    </h2>
+                    <p className="text-sm text-gray-500">
+                      {product.description}
+                    </p>
 
-                  {/* Select de quantidade */}
-                  <div className="mt-2 text-sm text-gray-700">
-                    <label className="mr-2 font-medium">Quantidade:</label>
-                    <select
-                      value={quantity}
-                      onChange={(e) =>
-                        handleQuantityChange(product.id, Number(e.target.value))
-                      }
-                      className="border px-2 py-1 rounded text-sm"
-                    >
-                      {Array.from(
-                        { length: product.quantity },
-                        (_, i) => i + 1,
-                      ).map((num) => (
-                        <option key={num} value={num}>
-                          {num}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                    <div className="mt-2 text-sm text-gray-700">
+                      <span className="font-medium">Tamanho:</span>{" "}
+                      {product.size_name}
+                    </div>
 
-                  {/* Preço */}
-                  <div className="mt-2 text-sm text-gray-700 flex items-center gap-2">
-                    <span>
+                    <div className="mt-2 text-sm text-gray-700">
+                      <label className="mr-2 font-medium">Quantidade:</label>
+                      <select
+                        value={quantity}
+                        onChange={(e) =>
+                          handleQuantityChange(
+                            product.id,
+                            Number(e.target.value),
+                          )
+                        }
+                        className="border px-2 py-1 rounded text-sm"
+                      >
+                        {Array.from(
+                          { length: product.quantity },
+                          (_, i) => i + 1,
+                        ).map((num) => (
+                          <option key={num} value={num}>
+                            {num}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="mt-2 text-sm text-gray-700">
                       Preço:
                       {product.discount_price ? (
                         <>
@@ -103,38 +110,42 @@ export default function CartPage() {
                           </span>
                         </>
                       ) : (
-                        <span className="ml-1 font-semibold">
+                        <span className="text-green-600 font-bold">
                           R$ {product.price.toFixed(2)}
                         </span>
                       )}
-                    </span>
+                    </div>
+
+                    <div className="mt-3 text-sm text-gray-600">
+                      Subtotal:{" "}
+                      <span className="font-medium text-gray-800">
+                        R$ {subtotal.toFixed(2)}
+                      </span>
+                    </div>
                   </div>
 
-                  {/* Subtotal */}
-                  <div className="mt-3 text-sm text-gray-600">
-                    Subtotal:{" "}
-                    <span className="font-medium text-gray-800">
-                      R$ {subtotal.toFixed(2)}
-                    </span>
+                  {/* Botão remover */}
+                  <div className="mt-4 sm:mt-0 sm:absolute sm:top-4 sm:right-4">
+                    <button
+                      onClick={() => removeFromCart(product.id)}
+                      className="text-sm text-red-600 hover:underline hover:cursor-pointer"
+                    >
+                      Remover
+                    </button>
                   </div>
                 </div>
-                <button
-                  onClick={() => removeFromCart(product.id)}
-                  className="text-sm text-red-600 hover:underline ml-auto"
-                >
-                  Remover
-                </button>
               </div>
             );
           })}
 
-          {/* Total Geral */}
+          {/* Total geral */}
           <div className="text-right mt-6 text-lg font-semibold text-gray-800">
             Total: R$ {total.toFixed(2)}
           </div>
         </div>
       )}
 
+      {/* Botão de continuar comprando */}
       <div className="text-right">
         <Link
           href="/"
