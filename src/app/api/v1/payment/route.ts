@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { MercadoPagoConfig, Preference } from "mercadopago";
+import { getIdPreference } from "@/app/lib/mercadoPagoService"; // Importando a função
 
 // Configuração do Mercado Pago
 const TOKEN = process.env.MP_ACCESS_TOKEN!;
@@ -10,7 +11,6 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
 
-    // Tipagem explícita para os dados do cliente e produtos
     const { customer, products } = body as {
       customer: {
         name: string;
@@ -35,33 +35,41 @@ export async function POST(req: NextRequest) {
       }[];
     };
 
-    // Preparando os dados da preferência para o Mercado Pago
+    // Monta os itens
+    const items = products.map((product) => ({
+      id: String(product.productId),
+      title: `${product.name} - ${product.size}`,
+      description: product.description,
+      quantity: product.quantity,
+      currency_id: "BRL",
+      unit_price: Number(product.price),
+    }));
+
+    // Monta o envio
+    const shipments = {
+      receiver_address: {
+        zip_code: customer.zip,
+        street_name: customer.address,
+        street_number: Number(customer.street_number),
+        floor: customer.floor,
+        apartment: customer.apartment,
+        city_name: customer.city,
+        state_name: customer.state,
+        country_name: customer.country_name,
+      },
+    };
+
+    // Monta o preferenceData no formato antigo/correto
     const preferenceData = {
+      items,
+      shipments,
       payer: {
         name: customer.name,
         email: customer.email,
         phone: {
           number: customer.phone,
         },
-        address: {
-          street_name: customer.address,
-          street_number: customer.street_number,
-          floor: customer.floor,
-          apartment: customer.apartment,
-          city: customer.city,
-          state: customer.state,
-          zip_code: customer.zip,
-          country: customer.country_name,
-        },
       },
-      items: products.map((product) => ({
-        id: String(product.productId),
-        title: `${product.name} - ${product.size}`,
-        description: product.description,
-        quantity: product.quantity,
-        currency_id: "BRL",
-        unit_price: Number(product.price),
-      })),
       back_urls: {
         success: `${process.env.BASE_URL}/success`,
         failure: `${process.env.BASE_URL}/failure`,
@@ -70,11 +78,12 @@ export async function POST(req: NextRequest) {
       auto_return: "approved",
     };
 
-    // Criando a preferência com o Mercado Pago usando a nova abordagem
-
     const response = await preferences.create({ body: preferenceData });
 
-    // Retornando a URL de inicialização do pagamento
+    if (response.id) {
+      await getIdPreference(response.id);
+    }
+
     return NextResponse.json({ init_point: response.init_point });
   } catch (error) {
     console.error(error);
