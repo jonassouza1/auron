@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "vercel-build": "next build",
     "dev": "npm run services:up && npm run services:wait:database && npm run migrations:up && next dev --turbopack",
     "test": "npm run services:up && concurrently -n next,jest --hide next -k -s command-jest 'next dev --turbopack' 'jest --runInBand'",
     "test:watch": "jest --watchAll --runInBand --verbose",
