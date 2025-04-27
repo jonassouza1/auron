@@ -1,5 +1,6 @@
 "use client";
 
+import CheckoutForm from "@/components/CheckoutForm";
 import { useCart } from "@/app/context/CartContext";
 import Link from "next/link";
 import Image from "next/image";
@@ -7,7 +8,6 @@ import { useState, useEffect } from "react";
 
 export default function CartPage() {
   const { cartItems, removeFromCart } = useCart();
-
   const [quantities, setQuantities] = useState<{ [id: number]: number }>({});
 
   useEffect(() => {
@@ -29,13 +29,23 @@ export default function CartPage() {
   }, 0);
 
   return (
-    <main className="min-h-screen px-4 py-8 bg-gray-50">
-      <h1 className="text-2xl font-bold mb-6 text-gray-800">
+    <main className="min-h-screen px-4 py-8 bg-gray-50 relative">
+      {/* Botão de Voltar no topo esquerdo */}
+      <Link
+        href="/"
+        className="absolute top-4 left-4 bg-gray-200 text-gray-700 px-4 py-2 rounded-xl hover:bg-gray-300 transition text-sm"
+      >
+        ← Continuar comprando
+      </Link>
+
+      <h1 className="text-2xl font-bold mb-6 text-center text-gray-800">
         Carrinho de Compras
       </h1>
 
       {cartItems.length === 0 ? (
-        <p className="text-gray-600">Seu carrinho está vazio.</p>
+        <p className="text-gray-600 text-center mt-10">
+          Seu carrinho está vazio.
+        </p>
       ) : (
         <div className="space-y-6">
           {cartItems.map((product) => {
@@ -145,15 +155,16 @@ export default function CartPage() {
         </div>
       )}
 
-      {/* Botão de continuar comprando */}
-      <div className="text-right">
-        <Link
-          href="/"
-          className="inline-block mt-6 bg-gray-800 text-white px-6 py-2 rounded-xl hover:bg-gray-700 transition"
-        >
-          Continuar comprando
-        </Link>
-      </div>
+      {cartItems.length > 0 && (
+        <>
+          <div className="text-right mt-6 text-lg font-semibold text-gray-800">
+            Total: R$ {total.toFixed(2)}
+          </div>
+
+          {/* Formulário de checkout */}
+          <CheckoutForm cartItems={cartItems} quantities={quantities} />
+        </>
+      )}
     </main>
   );
 }
