@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { MercadoPagoConfig, Preference } from "mercadopago";
-import { getIdPreference } from "@/app/lib/mercadoPagoService"; // Importando a função
+import { getIdPreference } from "@/app/lib/mercadoPagoService";
 
-// Configuração do Mercado Pago
 const TOKEN = process.env.MP_ACCESS_TOKEN!;
 const client = new MercadoPagoConfig({ accessToken: TOKEN });
 const preferences = new Preference(client);
@@ -35,7 +34,6 @@ export async function POST(req: NextRequest) {
       }[];
     };
 
-    // Monta os itens
     const items = products.map((product) => ({
       id: String(product.productId),
       title: `${product.name} - ${product.size}`,
@@ -45,7 +43,6 @@ export async function POST(req: NextRequest) {
       unit_price: Number(product.price),
     }));
 
-    // Monta o envio
     const shipments = {
       receiver_address: {
         zip_code: customer.zip,
@@ -59,7 +56,6 @@ export async function POST(req: NextRequest) {
       },
     };
 
-    // Monta o preferenceData no formato antigo/correto
     const preferenceData = {
       items,
       shipments,

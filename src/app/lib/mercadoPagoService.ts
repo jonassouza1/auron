@@ -58,7 +58,6 @@ export async function getIdPreference(preferenceId: string) {
     );
     console.log("Dados da preferência:", preferenceData);
 
-    // Organizando os dados como no código antigo
     const data = {
       user: {
         name: preferenceData.payer?.name ?? "",
@@ -89,7 +88,6 @@ export async function getIdPreference(preferenceId: string) {
       ),
     };
 
-    // Enviando o email com todos os dados, incluindo o endereço
     await serverEmailNotification(null, data);
 
     return data;

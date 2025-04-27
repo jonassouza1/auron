@@ -25,7 +25,6 @@ export async function POST() {
   }
 }
 
-// middleware de erro inspirado no seu antigo controller
 function handleError(err: unknown) {
   const error = err as { statusCode?: number; message?: string };
 

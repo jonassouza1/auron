@@ -60,7 +60,6 @@ export async function GET() {
   }
 }
 
-// Impede os outros métodos
 export function POST() {
   const error = new MethodNotAllowedError();
   return new Response(JSON.stringify(error), {
