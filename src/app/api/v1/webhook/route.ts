@@ -1,4 +1,4 @@
-import type { NextApiRequest, NextApiResponse } from "next";
+import { NextResponse } from "next/server";
 import crypto from "crypto";
 import { checkPaymentStatus } from "@/app/lib/mercadoPagoService";
 
@@ -21,22 +21,18 @@ function generateSignature(dataID: string, xRequestId: string, ts: string) {
   return crypto.createHmac("sha256", secret).update(manifest).digest("hex");
 }
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse,
-) {
-  if (req.method !== "POST") return res.status(405).end("Method Not Allowed");
-
-  const { "x-signature": xSignature, "x-request-id": xRequestId } =
-    req.headers as Record<string, string>;
+export async function POST(req: Request) {
+  const headers = req.headers;
+  const xSignature = headers.get("x-signature");
+  const xRequestId = headers.get("x-request-id");
 
   if (!xSignature || !xRequestId) {
     console.error("Missing headers", { xSignature, xRequestId });
-    return res.status(400).end("Missing headers");
+    return NextResponse.json({ message: "Missing headers" }, { status: 400 });
   }
 
   const { ts, receivedSignature } = parseSignature(xSignature);
-  const dataID = req.body?.data?.id;
+  const dataID = (await req.json())?.data?.id;
 
   if (!ts || !receivedSignature || !dataID) {
     console.error("Invalid webhook structure.", {
@@ -44,13 +40,19 @@ export default async function handler(
       receivedSignature,
       dataID,
     });
-    return res.status(400).end("Invalid webhook structure");
+    return NextResponse.json(
+      { message: "Invalid webhook structure" },
+      { status: 400 },
+    );
   }
 
   const generatedSignature = generateSignature(dataID, xRequestId, ts);
   if (generatedSignature !== receivedSignature) {
     console.error("Signature mismatch");
-    return res.status(400).end("Signature mismatch");
+    return NextResponse.json(
+      { message: "Signature mismatch" },
+      { status: 400 },
+    );
   }
 
   if (!processedNotifications.has(dataID)) {
@@ -61,5 +63,5 @@ export default async function handler(
     console.log("Duplicate notification ignored", dataID);
   }
 
-  res.status(200).end("OK");
+  return NextResponse.json({ message: "OK" }, { status: 200 });
 }
