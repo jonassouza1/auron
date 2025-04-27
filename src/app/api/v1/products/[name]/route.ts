@@ -1,25 +1,20 @@
-// src/app/api/products/[name]/route.ts
-
 import { NextResponse } from "next/server";
-import database from "@/infra/database"; // ajusta conforme o seu projeto
+import { NextRequest } from "next/server";
+import database from "@/infra/database";
 
-interface Params {
-  params: {
-    name: string;
-  };
-}
+export async function GET(request: NextRequest) {
+  const pathname = request.nextUrl.pathname;
+  const segments = pathname.split("/");
+  const name = segments[segments.length - 1];
 
-export async function GET(request: Request, { params }: Params) {
-  let { name } = params;
-
-  if (!name) {
+  if (!name || typeof name !== "string") {
     return NextResponse.json(
-      { message: "Nome do produto não fornecido." },
+      { message: "Nome do produto não fornecido ou inválido." },
       { status: 400 },
     );
   }
 
-  name = name.trim();
+  const trimmedName = name.trim();
 
   try {
     const productsResult = await database.query({
@@ -30,7 +25,7 @@ export async function GET(request: Request, { params }: Params) {
         LEFT JOIN categories c ON p.category_id = c.id
         WHERE LOWER(TRIM(p.name)) = LOWER($1);
       `,
-      values: [name],
+      values: [trimmedName],
     });
 
     if (productsResult.rows.length === 0) {
