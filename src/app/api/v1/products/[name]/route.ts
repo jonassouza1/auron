@@ -3,13 +3,10 @@
 import { NextResponse } from "next/server";
 import database from "@/infra/database"; // ajusta conforme o seu projeto
 
-interface Params {
-  params: {
-    name: string;
-  };
-}
-
-export async function GET(request: Request, { params }: Params) {
+export async function GET(
+  request: Request,
+  { params }: { params: { name: string } },
+) {
   let { name } = params;
 
   if (!name) {
