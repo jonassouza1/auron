@@ -27,6 +27,7 @@ export async function checkPaymentStatus(paymentId: string) {
 
   try {
     const paymentData = await fetchFromApi(`/v1/payments/${paymentId}`);
+    console.log("Dados do pagamento recebidos:", paymentData);
     const status = paymentData.status;
     const preferenceId = paymentData.order?.id || paymentData.preference_id;
 
