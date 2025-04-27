@@ -27,26 +27,71 @@ export async function checkPaymentStatus(paymentId: string) {
 
   try {
     const paymentData = await fetchFromApi(`/v1/payments/${paymentId}`);
+    console.log("Dados do pagamento:", paymentData);
+
     const status = paymentData.status;
-    const preferenceId = paymentData.order?.id || paymentData.preference_id;
 
-    if (!preferenceId) {
-      console.error("Preference ID não encontrado no pagamento");
-      return;
-    }
+    await serverEmailNotification(status, null);
+  } catch (error) {
+    console.error("Erro ao verificar status do pagamento:", error);
+  }
+}
 
+interface PreferenceItem {
+  id?: string;
+  title: string;
+  description?: string;
+  quantity: number;
+  unit_price: number;
+  currency_id?: string;
+}
+
+export async function getIdPreference(preferenceId: string) {
+  if (!preferenceId) {
+    console.error("ID da preferência não fornecido");
+    return;
+  }
+
+  try {
     const preferenceData = await fetchFromApi(
       `/checkout/preferences/${preferenceId}`,
     );
+    console.log("Dados da preferência:", preferenceData);
 
     const data = {
-      user: preferenceData.payer,
-      address: preferenceData.shipments?.receiver_address || {},
-      productPurchased: preferenceData.items,
+      user: {
+        name: preferenceData.payer?.name ?? "",
+        email: preferenceData.payer?.email ?? "",
+        phone: {
+          number: preferenceData.payer?.phone?.number ?? "",
+        },
+      },
+      address: {
+        zip_code: preferenceData.shipments?.receiver_address?.zip_code ?? "",
+        street_name:
+          preferenceData.shipments?.receiver_address?.street_name ?? "",
+        street_number:
+          preferenceData.shipments?.receiver_address?.street_number ?? "",
+        city_name: preferenceData.shipments?.receiver_address?.city_name ?? "",
+        state_name:
+          preferenceData.shipments?.receiver_address?.state_name ?? "",
+        country_name:
+          preferenceData.shipments?.receiver_address?.country_name ?? "",
+      },
+      productPurchased: (preferenceData.items as PreferenceItem[]).map(
+        (item) => ({
+          title: item.title,
+          description: item.description ?? "",
+          quantity: item.quantity,
+          unit_price: item.unit_price,
+        }),
+      ),
     };
 
-    await serverEmailNotification(status, data);
+    await serverEmailNotification(null, data);
+
+    return data;
   } catch (error) {
-    console.error("Erro ao verificar status do pagamento:", error);
+    console.error("Erro ao buscar a preferência:", error);
   }
 }

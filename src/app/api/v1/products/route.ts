@@ -1,7 +1,5 @@
-// src/app/api/products/route.ts
-
 import { NextResponse } from "next/server";
-import database from "@/infra/database"; // ajusta o path conforme onde está seu arquivo
+import database from "@/infra/database";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
