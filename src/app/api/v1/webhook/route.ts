@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
-import { checkPaymentStatus } from "@/app/lib/mercadoPagoService";
+import { checkPaymentStatus } from "@/lib/mercadoPagoService";
 
 const secret = process.env.WEBHOOK_SECRET as string;
 const processedNotifications = new Set<string>();
