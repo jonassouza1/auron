@@ -19,13 +19,6 @@ async function fetchFromApi(endpoint: string) {
   return response.json();
 }
 
-type OrderItem = {
-  title: string;
-  description?: string;
-  quantity: number;
-  unit_price: number;
-};
-
 export async function checkPaymentStatus(paymentId: string) {
   if (!paymentId) {
     console.error("ID de pagamento não fornecido");
@@ -34,48 +27,71 @@ export async function checkPaymentStatus(paymentId: string) {
 
   try {
     const paymentData = await fetchFromApi(`/v1/payments/${paymentId}`);
+    console.log("Dados do pagamento:", paymentData);
+
     const status = paymentData.status;
-    const orderId = paymentData.order?.id;
 
-    if (status !== "approved") {
-      console.log(`Pagamento não aprovado. Status: ${status}`);
-      return;
-    }
-
-    let fullData = null;
-
-    if (orderId) {
-      const orderData = await fetchFromApi(`/merchant_orders/${orderId}`);
-      const shipment = orderData.shipments?.[0];
-
-      fullData = {
-        user: {
-          name: paymentData.payer?.first_name ?? "",
-          email: paymentData.payer?.email ?? "",
-          phone: {
-            number: paymentData.payer?.phone?.number ?? "",
-          },
-        },
-        address: {
-          zip_code: shipment?.receiver_address?.zip_code ?? "",
-          street_name: shipment?.receiver_address?.street_name ?? "",
-          street_number: shipment?.receiver_address?.street_number ?? "",
-          city_name: shipment?.receiver_address?.city_name ?? "",
-          state_name: shipment?.receiver_address?.state?.name ?? "",
-          country_name: shipment?.receiver_address?.country?.name ?? "",
-        },
-        productPurchased:
-          (orderData.items as OrderItem[])?.map((item) => ({
-            title: item.title,
-            description: item.description ?? "",
-            quantity: item.quantity,
-            unit_price: item.unit_price,
-          })) ?? [],
-      };
-    }
-
-    await serverEmailNotification(status, fullData);
+    await serverEmailNotification(status, null);
   } catch (error) {
     console.error("Erro ao verificar status do pagamento:", error);
+  }
+}
+
+interface PreferenceItem {
+  id?: string;
+  title: string;
+  description?: string;
+  quantity: number;
+  unit_price: number;
+  currency_id?: string;
+}
+
+export async function getIdPreference(preferenceId: string) {
+  if (!preferenceId) {
+    console.error("ID da preferência não fornecido");
+    return;
+  }
+
+  try {
+    const preferenceData = await fetchFromApi(
+      `/checkout/preferences/${preferenceId}`,
+    );
+    console.log("Dados da preferência:", preferenceData);
+
+    const data = {
+      user: {
+        name: preferenceData.payer?.name ?? "",
+        email: preferenceData.payer?.email ?? "",
+        phone: {
+          number: preferenceData.payer?.phone?.number ?? "",
+        },
+      },
+      address: {
+        zip_code: preferenceData.shipments?.receiver_address?.zip_code ?? "",
+        street_name:
+          preferenceData.shipments?.receiver_address?.street_name ?? "",
+        street_number:
+          preferenceData.shipments?.receiver_address?.street_number ?? "",
+        city_name: preferenceData.shipments?.receiver_address?.city_name ?? "",
+        state_name:
+          preferenceData.shipments?.receiver_address?.state_name ?? "",
+        country_name:
+          preferenceData.shipments?.receiver_address?.country_name ?? "",
+      },
+      productPurchased: (preferenceData.items as PreferenceItem[]).map(
+        (item) => ({
+          title: item.title,
+          description: item.description ?? "",
+          quantity: item.quantity,
+          unit_price: item.unit_price,
+        }),
+      ),
+    };
+
+    await serverEmailNotification(null, data);
+
+    return data;
+  } catch (error) {
+    console.error("Erro ao buscar a preferência:", error);
   }
 }
