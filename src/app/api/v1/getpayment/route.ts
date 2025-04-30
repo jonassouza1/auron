@@ -1,4 +1,4 @@
-import type { NextApiRequest, NextApiResponse } from "next";
+import { NextResponse } from "next/server";
 
 interface PaymentItem {
   title: string;
@@ -22,22 +22,15 @@ interface MercadoPagoPayment {
   [key: string]: unknown;
 }
 
-interface ErrorResponse {
-  error: string;
-}
-
-interface SuccessResponse {
-  productPurchased: PaymentItem[];
-}
-
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse<SuccessResponse | ErrorResponse>,
-) {
-  const payment_id = req.query.id as string;
+export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const payment_id = searchParams.get("id");
 
   if (!payment_id) {
-    return res.status(400).json({ error: "ID de pagamento não fornecido" });
+    return NextResponse.json(
+      { error: "ID de pagamento não fornecido" },
+      { status: 400 },
+    );
   }
 
   try {
@@ -55,19 +48,23 @@ export default async function handler(
     }
 
     const payment: MercadoPagoPayment = await response.json();
+    console.log(payment);
 
     const productPurchased: PaymentItem[] = payment.additional_info.items.map(
       (item) => ({
         title: item.title,
         description: item.description,
         quantity: item.quantity,
-        unit_price: item.unit_price,
+        unit_price: Number(item.unit_price),
       }),
     );
 
-    res.status(200).json({ productPurchased });
+    return NextResponse.json({ productPurchased }, { status: 200 });
   } catch (error) {
     console.error("Erro:", error);
-    res.status(500).json({ error: "Erro ao buscar os dados do pagamento" });
+    return NextResponse.json(
+      { error: "Erro ao buscar os dados do pagamento" },
+      { status: 500 },
+    );
   }
 }
