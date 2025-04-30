@@ -11,34 +11,34 @@ interface ProductPurchased {
   unit_price: number;
 }
 
-interface PreferenceData {
+interface PaymentData {
   productPurchased: ProductPurchased[];
 }
 
 export default function SuccessPage() {
   const searchParams = useSearchParams();
-  const [preferenceData, setPreferenceData] = useState<PreferenceData>();
+  const [paymentData, setPaymentData] = useState<PaymentData>();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const preference_id = searchParams.get("preference_id");
+  const payment_id = searchParams.get("payment_id");
 
   useEffect(() => {
-    async function fetchPreference() {
-      if (!preference_id) {
-        setError("ID de preferência não encontrado");
+    async function fetchPaymentData() {
+      if (!payment_id) {
+        setError("ID de pagamento não encontrado");
         setLoading(false);
         return;
       }
 
       try {
-        const res = await fetch(`/api/v1/preference?id=${preference_id}`);
+        const res = await fetch(`/api/v1/getpayment?id=${payment_id}`);
         if (!res.ok) {
           throw new Error("Falha ao buscar dados");
         }
 
         const data = await res.json();
-        setPreferenceData(data);
+        setPaymentData(data);
       } catch (err) {
         console.error(err);
         setError("Erro ao carregar os dados da compra");
@@ -47,14 +47,12 @@ export default function SuccessPage() {
       }
     }
 
-    fetchPreference();
-  }, [preference_id]);
+    fetchPaymentData();
+  }, [payment_id]);
 
-  if (loading) {
-    return <div>Carregando...</div>;
-  }
+  if (loading) return <div>Carregando...</div>;
 
-  if (error) {
+  if (error)
     return (
       <div className="text-center py-20">
         <h1 className="text-2xl font-bold text-red-600">{error}</h1>
@@ -66,9 +64,8 @@ export default function SuccessPage() {
         </Link>
       </div>
     );
-  }
 
-  if (!preferenceData) {
+  if (!paymentData)
     return (
       <div className="text-center py-20">
         <h1 className="text-2xl font-bold text-red-600">
@@ -82,9 +79,8 @@ export default function SuccessPage() {
         </Link>
       </div>
     );
-  }
 
-  const purchasedItems = preferenceData.productPurchased.map((item) => ({
+  const purchasedItems = paymentData.productPurchased.map((item) => ({
     title: item.title,
     quantity: item.quantity,
     unit_price: item.unit_price,
