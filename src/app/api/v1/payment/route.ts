@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { MercadoPagoConfig, Preference } from "mercadopago";
-
+import { getIdPreference } from "@/lib/mercadoPagoService";
 const TOKEN = process.env.MP_ACCESS_TOKEN!;
 const client = new MercadoPagoConfig({ accessToken: TOKEN });
 const preferences = new Preference(client);
@@ -74,6 +74,9 @@ export async function POST(req: NextRequest) {
     };
 
     const response = await preferences.create({ body: preferenceData });
+    if (response.id) {
+      await getIdPreference(response.id);
+    }
 
     return NextResponse.json({ init_point: response.init_point });
   } catch (error) {
