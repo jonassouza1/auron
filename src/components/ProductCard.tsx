@@ -1,3 +1,4 @@
+"use client";
 import Image from "next/image";
 import { useCart } from "@/app/context/CartContext"; // ajuste o caminho conforme necessário
 

@@ -1,6 +1,3 @@
-"use client";
-
-import { useEffect, useState } from "react";
 import Header from "@/components/Header";
 import FilterBar from "@/components/FilterBar";
 import ProductCard from "@/components/ProductCard";
@@ -16,59 +13,49 @@ type Product = {
   size_name: string;
 };
 
-export default function Home() {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedCategory, setSelectedCategory] = useState<string>("");
+// Cache de 1 hora
+export const revalidate = 3600;
 
-  useEffect(() => {
-    async function fetchProducts() {
-      try {
-        setLoading(true);
+async function getProducts(category?: string): Promise<Product[]> {
+  let url = process.env.NEXT_PUBLIC_SITE_URL
+    ? `${process.env.NEXT_PUBLIC_SITE_URL}/api/v1/products`
+    : "http://localhost:3000/api/v1/products";
+  if (category) {
+    url += `?category_name=${encodeURIComponent(category)}`;
+  }
 
-        let url = "/api/v1/products";
-        if (selectedCategory) {
-          url += `?category_name=${encodeURIComponent(selectedCategory)}`;
-        }
+  const res = await fetch(url, {
+    next: { revalidate: 3600 }, // cache server-side
+  });
 
-        const response = await fetch(url);
-        const data = await response.json();
+  const data = await res.json();
 
-        const normalizedProducts = data.products.map((product: Product) => ({
-          ...product,
-          price: Number(product.price),
-          discount_price: product.discount_price
-            ? Number(product.discount_price)
-            : undefined,
-        }));
+  return data.products.map((product: Product) => ({
+    ...product,
+    price: Number(product.price),
+    discount_price: product.discount_price
+      ? Number(product.discount_price)
+      : undefined,
+  }));
+}
 
-        setProducts(normalizedProducts);
-      } catch (error) {
-        console.error("Erro ao buscar produtos:", error);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchProducts();
-  }, [selectedCategory]); // sempre que mudar a categoria, refaz o fetch
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: { category?: string };
+}) {
+  const products = await getProducts(searchParams.category);
 
   return (
     <main className="min-h-screen bg-gray-50 px-4 py-6">
       <Header />
-      <FilterBar onCategoryChange={setSelectedCategory} />
+      <FilterBar />
 
-      {loading ? (
-        <div className="text-center mt-10 text-gray-600">
-          Carregando produtos...
-        </div>
-      ) : (
-        <section className="mt-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {products.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
-        </section>
-      )}
+      <section className="mt-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        {products.map((product) => (
+          <ProductCard key={product.id} product={product} />
+        ))}
+      </section>
     </main>
   );
 }
