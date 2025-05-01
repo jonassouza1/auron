@@ -25,10 +25,11 @@ export default function ProductCard({ product }: { product: Product }) {
         <Image
           src={product.image_url}
           alt={product.name}
+          quality={100}
           fill
           priority={product.image_url === "/calca_legging.jpg"}
           sizes="(max-width: 768px) 100vw, 400px"
-          className="rounded-xl object-cover"
+          className="rounded-xl object-contain object-center bg-white"
         />
       </div>
 
