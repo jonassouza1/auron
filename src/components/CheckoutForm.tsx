@@ -143,7 +143,7 @@ export default function CheckoutForm({
           <div key={id} className={full ? "md:col-span-2" : ""}>
             <label
               htmlFor={id}
-              className="block text-sm font-medium text-gray-700"
+              className="block text-sm font-semibold text-gray-800 mb-1"
             >
               {label}
             </label>
@@ -152,11 +152,11 @@ export default function CheckoutForm({
               id={id}
               maxLength={maxLength}
               {...register(id as keyof CheckoutFormData)}
-              className={`mt-1 block w-full rounded-xl border ${
+              className={`mt-2 w-full rounded-xl border px-4 py-2 bg-gray-50 text-gray-700 placeholder-gray-400 shadow-inner focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 ${
                 errors[id as keyof CheckoutFormData]
-                  ? "border-red-500"
+                  ? "border-red-400 ring-red-100"
                   : "border-gray-300"
-              } shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm`}
+              }`}
             />
             {errors[id as keyof CheckoutFormData] && (
               <p className="text-red-600 text-sm mt-1">
@@ -175,7 +175,7 @@ export default function CheckoutForm({
         <button
           type="submit"
           disabled={isSubmitting}
-          className={`inline-flex items-center justify-center rounded-xl px-6 py-3 text-white text-lg font-semibold transition ${
+          className={`hover:cursor-pointer inline-flex items-center justify-center rounded-xl px-6 py-3 text-white text-lg font-semibold transition ${
             isSubmitting
               ? "bg-gray-400 cursor-not-allowed"
               : "bg-green-600 hover:bg-green-700"
