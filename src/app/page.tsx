@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Header from "@/components/Header";
 import FilterBar from "@/components/FilterBar";
 import ProductCard from "@/components/ProductCard";
@@ -13,19 +14,19 @@ type Product = {
   size_name: string;
 };
 
-// Cache de 1 hora
 export const revalidate = 3600;
 
 async function getProducts(category?: string): Promise<Product[]> {
   let url = process.env.NEXT_PUBLIC_SITE_URL
     ? `${process.env.NEXT_PUBLIC_SITE_URL}/api/v1/products`
     : "http://localhost:3000/api/v1/products";
+
   if (category) {
     url += `?category_name=${encodeURIComponent(category)}`;
   }
 
   const res = await fetch(url, {
-    next: { revalidate: 3600 }, // cache server-side
+    next: { revalidate: 3600 },
   });
 
   const data = await res.json();
@@ -42,15 +43,22 @@ async function getProducts(category?: string): Promise<Product[]> {
 export default async function Home({
   searchParams,
 }: {
-  searchParams: { category?: string };
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
-  const products = await getProducts(searchParams.category);
+  const resolvedSearchParams = await searchParams;
+  const category =
+    typeof resolvedSearchParams.category === "string"
+      ? resolvedSearchParams.category
+      : undefined;
+
+  const products = await getProducts(category);
 
   return (
     <main className="min-h-screen bg-gray-50 px-4 py-6">
       <Header />
-      <FilterBar />
-
+      <Suspense fallback={<div>Carregando filtros...</div>}>
+        <FilterBar />
+      </Suspense>
       <section className="mt-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
         {products.map((product) => (
           <ProductCard key={product.id} product={product} />
