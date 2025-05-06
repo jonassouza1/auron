@@ -1,4 +1,5 @@
 import { serverEmailNotification } from "@/infra/email/EmailNotification";
+import user from "@/models/user";
 
 const TOKEN = process.env.MP_ACCESS_TOKEN as string;
 
@@ -30,8 +31,22 @@ export async function checkPaymentStatus(paymentId: string) {
     console.log("Dados do pagamento:", paymentData);
 
     const status = paymentData.status;
+    const userId = paymentData.metadata?.userId;
 
     await serverEmailNotification(status, null);
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    function calculatePoints(paymentData: any) {
+      const total = paymentData.transaction_amount || 0;
+      return Math.floor(total); // 1 ponto por real
+    }
+
+    // Se o pagamento foi aprovado e o usuário está identificado, adicionar pontos
+    if (status === "approved" && userId) {
+      const points = calculatePoints(paymentData); // função para calcular os pontos com base no pagamento
+      await user.incrementUserPoints(userId, points);
+      console.log(`Adicionados ${points} pontos para o usuário ${userId}`);
+    }
   } catch (error) {
     console.error("Erro ao verificar status do pagamento:", error);
   }

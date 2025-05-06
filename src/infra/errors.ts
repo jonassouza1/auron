@@ -1,5 +1,5 @@
 type ErrorParams = {
-  cause: unknown;
+  cause?: unknown;
   message?: string;
   action?: string;
   statusCode?: number;
