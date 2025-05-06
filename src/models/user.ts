@@ -29,12 +29,11 @@ async function create(userInputValues: UserData) {
 
   async function runInsertQuery(userInputValues: UserData) {
     const results = await database.query({
-      text: "INSERT INTO users (username, email, password, points) VALUES ($1, $2, $3, $4) RETURNING *;",
+      text: "INSERT INTO users (username, email, password) VALUES ($1, $2, $3) RETURNING *;",
       values: [
         userInputValues.username,
         userInputValues.email,
         userInputValues.password,
-        userInputValues.points,
       ],
     });
     return results.rows[0];
