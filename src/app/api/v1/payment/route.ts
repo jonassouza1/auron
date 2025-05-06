@@ -1,12 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { MercadoPagoConfig, Preference } from "mercadopago";
+import { cookies } from "next/headers";
+import { jwtVerify } from "jose";
 import { getIdPreference } from "@/lib/mercadoPagoService";
+
 const TOKEN = process.env.MP_ACCESS_TOKEN!;
 const client = new MercadoPagoConfig({ accessToken: TOKEN });
 const preferences = new Preference(client);
 
 export async function POST(req: NextRequest) {
   try {
+    // Recuperar os dados do corpo da requisição
     const body = await req.json();
 
     const { customer, products } = body as {
@@ -33,6 +37,24 @@ export async function POST(req: NextRequest) {
       }[];
     };
 
+    // Verificar se o usuário está logado
+    let userId: string | null | unknown = null;
+    const token = (await cookies()).get("token")?.value;
+
+    if (token) {
+      try {
+        // Se o token existe, verificar e decodificar o JWT
+        const { payload } = await jwtVerify(
+          token,
+          new TextEncoder().encode(process.env.JWT_SECRET!),
+        );
+        userId = payload.id; // Pegar o ID do usuário a partir do token
+      } catch (err) {
+        console.error("Erro ao verificar token:", err);
+      }
+    }
+
+    // Mapeia os itens para o formato esperado pelo Mercado Pago
     const items = products.map((product) => ({
       id: String(product.productId),
       title: `${product.name} - ${product.size}`,
@@ -42,6 +64,7 @@ export async function POST(req: NextRequest) {
       unit_price: Number(product.price),
     }));
 
+    // Dados de envio
     const shipments = {
       receiver_address: {
         zip_code: customer.zip,
@@ -55,6 +78,7 @@ export async function POST(req: NextRequest) {
       },
     };
 
+    // Dados da preferência de pagamento
     const preferenceData = {
       items,
       shipments,
@@ -71,9 +95,14 @@ export async function POST(req: NextRequest) {
         pending: `${process.env.BASE_URL}/pending`,
       },
       auto_return: "approved",
+      metadata: {
+        userId, // Salva o userId (se logado) ou null (se não logado)
+      },
     };
 
+    // Criação da preferência de pagamento
     const response = await preferences.create({ body: preferenceData });
+
     if (response.id) {
       await getIdPreference(response.id);
     }
