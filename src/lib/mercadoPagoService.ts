@@ -31,7 +31,7 @@ export async function checkPaymentStatus(paymentId: string) {
     console.log("Dados do pagamento:", paymentData);
 
     const status = paymentData.status;
-    const userId = paymentData.metadata?.userId;
+    const userId = paymentData.metadata?.user_id;
 
     await serverEmailNotification(status, null);
 
@@ -41,9 +41,8 @@ export async function checkPaymentStatus(paymentId: string) {
       return Math.floor(total); // 1 ponto por real
     }
 
-    // Se o pagamento foi aprovado e o usuário está identificado, adicionar pontos
     if (status === "approved" && userId) {
-      const points = calculatePoints(paymentData); // função para calcular os pontos com base no pagamento
+      const points = calculatePoints(paymentData);
       await user.incrementUserPoints(userId, points);
       console.log(`Adicionados ${points} pontos para o usuário ${userId}`);
     }
