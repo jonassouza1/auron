@@ -138,6 +138,68 @@ async function incrementUserPoints(
   return result.rows[0];
 }
 
+// Função para criar uma compra
+async function createPurchase(purchaseData: {
+  usuario_id: string; // ID do usuário
+  payment_id: string; // ID do pagamento
+  status: string; // Status da compra
+  total: number; // Total da compra
+}) {
+  const newPurchase = await runInsertPurchaseQuery(purchaseData);
+  return newPurchase;
+
+  async function runInsertPurchaseQuery(purchaseData: {
+    usuario_id: string;
+    payment_id: string;
+    status: string;
+    total: number;
+  }) {
+    const results = await database.query({
+      text: `INSERT INTO purchases (usuario_id, payment_id, status, total) 
+             VALUES ($1, $2, $3, $4) 
+             RETURNING *;`,
+      values: [
+        purchaseData.usuario_id,
+        purchaseData.payment_id,
+        purchaseData.status,
+        purchaseData.total,
+      ],
+    });
+    return results.rows[0];
+  }
+}
+
+// Função para criar um item de compra
+async function createPurchaseItem(purchaseItemData: {
+  shopping_id: number; // ID da compra (referência para a tabela purchases)
+  product_name: string; // Nome do produto
+  quantity: number; // Quantidade do produto
+  unit_price: number; // Preço unitário do produto
+}) {
+  const newPurchaseItem = await runInsertPurchaseItemQuery(purchaseItemData);
+  return newPurchaseItem;
+
+  async function runInsertPurchaseItemQuery(purchaseItemData: {
+    shopping_id: number;
+    product_name: string;
+    quantity: number;
+    unit_price: number;
+  }) {
+    const results = await database.query({
+      text: `INSERT INTO purchase_items (shopping_id, product_name, quantity, unit_price) 
+             VALUES ($1, $2, $3, $4) 
+             RETURNING *;`,
+      values: [
+        purchaseItemData.shopping_id,
+        purchaseItemData.product_name,
+        purchaseItemData.quantity,
+        purchaseItemData.unit_price,
+      ],
+    });
+    return results.rows[0];
+  }
+}
+
 async function findOneByEmail(email: string) {
   const userFound = await runSelectQuery(email);
   return userFound;
@@ -195,5 +257,7 @@ const user = {
   update,
   validateUserCredentialsByEmail,
   incrementUserPoints,
+  createPurchase,
+  createPurchaseItem,
 };
 export default user;

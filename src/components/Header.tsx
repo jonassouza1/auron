@@ -8,19 +8,14 @@ import { useEffect, useState } from "react";
 export default function Header() {
   const { cartItems } = useCart();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
 
   useEffect(() => {
     async function checkLoginStatus() {
       try {
         const res = await fetch("/api/v1/auth/me", { credentials: "include" });
-
-        if (res.ok) {
-          setIsLoggedIn(true);
-        } else {
-          setIsLoggedIn(false);
-        }
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      } catch (error) {
+        setIsLoggedIn(res.ok);
+      } catch {
         setIsLoggedIn(false);
       }
     }
@@ -28,19 +23,48 @@ export default function Header() {
     checkLoginStatus();
   }, []);
 
+  async function handleLogout() {
+    await fetch("/api/v1/auth/logout", {
+      method: "POST",
+      credentials: "include",
+    });
+    setIsLoggedIn(false);
+    setShowMenu(false);
+  }
+
   return (
     <>
       <header className="flex items-center justify-between p-4 pr-16 shadow bg-white">
         <h1 className="text-xl font-bold text-gray-800">Auron</h1>
 
-        <nav className="flex gap-4 items-center">
+        <nav className="flex gap-4 items-center relative">
           {isLoggedIn ? (
-            <Link
-              href="/me"
-              className="text-gray-700 hover:text-gray-900 transition font-medium"
+            <div
+              className="relative"
+              onMouseEnter={() => setShowMenu(true)}
+              onMouseLeave={() => setShowMenu(false)}
             >
-              👤 Perfil
-            </Link>
+              <button className="text-gray-700 hover:text-gray-900 transition font-medium">
+                👤 Perfil
+              </button>
+
+              {showMenu && (
+                <div className="absolute top-full mt-2 right-0 bg-white shadow-md rounded-md w-32 z-50 border">
+                  <Link
+                    href="/me"
+                    className="block px-4 py-2 text-sm hover:bg-gray-100 text-gray-800"
+                  >
+                    Minha conta
+                  </Link>
+                  <button
+                    onClick={handleLogout}
+                    className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+                  >
+                    Sair
+                  </button>
+                </div>
+              )}
+            </div>
           ) : (
             <Link
               href="/auth"
