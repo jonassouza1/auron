@@ -35,8 +35,8 @@ export async function checkPaymentStatus(paymentId: string) {
 
     await serverEmailNotification(status, null);
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    function calculatePoints(paymentData: any) {
+    // Função para calcular os pontos
+    function calculatePoints(paymentData: { transaction_amount: number }) {
       const total = paymentData.transaction_amount || 0;
       return Math.floor(total); // 1 ponto por real
     }
@@ -45,6 +45,28 @@ export async function checkPaymentStatus(paymentId: string) {
       const points = calculatePoints(paymentData);
       await user.incrementUserPoints(userId, points);
       console.log(`Adicionados ${points} pontos para o usuário ${userId}`);
+
+      const purchaseData = {
+        usuario_id: userId,
+        payment_id: paymentData.id,
+        status: status,
+        total: paymentData.transaction_amount || 0,
+      };
+      const newPurchase = await user.createPurchase(purchaseData);
+      console.log(`Compra registrada para o usuário ${userId}`);
+
+      const items = paymentData.additional_info?.items || [];
+      for (const item of items) {
+        const purchaseItemData = {
+          shopping_id: newPurchase.id,
+          product_name: item.title,
+          quantity: item.quantity,
+          unit_price: item.unit_price,
+        };
+
+        await user.createPurchaseItem(purchaseItemData);
+        console.log(`Item de compra registrado para o produto ${item.title}`);
+      }
     }
   } catch (error) {
     console.error("Erro ao verificar status do pagamento:", error);
